@@ -1,7 +1,62 @@
 <!DOCTYPE html>
 <html>
+<head>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f4f8;
+  color: #333;
+  padding: 20px;
+}
+h1 {
+  color: #2a6f97;
+}
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+li {
+  background-color: #ffffff;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+a {
+  text-decoration: none;
+  color: #1d3557;
+}
+a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
 <body>
 <h1>SW London Regulatory Service Partnership - Air Pollution Team</h1>
-<p><a href="test.html">Test map</a></p>
+<ul id="file-list">Loading files...</ul>
+
+<script>
+fetch('https://api.github.com/repos/swlonrsp/swlonrsp.github.io/contents/')
+  .then(response => response.json())
+  .then(data => {
+    const list = document.getElementById('file-list');
+    list.innerHTML = '';
+    data.forEach(item => {
+      if (item.name.endsWith('.html')) {
+        const li = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = 'https://swlonrsp.github.io/' + item.name;
+        link.textContent = item.name;
+        link.target = '_blank';
+        li.appendChild(link);
+        list.appendChild(li);
+      }
+    });
+  })
+  .catch(error => {
+    document.getElementById('file-list').textContent = 'Error loading files.';
+    console.error(error);
+  });
+</script>
 </body>
 </html>
