@@ -36,21 +36,34 @@ a:hover {
 <ul id="file-list">Loading files...</ul>
 
 <script>
+const baseURL = 'https://swlonrsp.github.io/';
+
 fetch('https://api.github.com/repos/swlonrsp/swlonrsp.github.io/contents/')
   .then(response => response.json())
   .then(data => {
+    const htmlFiles = data.filter(item => item.name.endsWith('.html'));
     const list = document.getElementById('file-list');
     list.innerHTML = '';
-    data.forEach(item => {
-      if (item.name.endsWith('.html')) {
-        const li = document.createElement('li');
-        const link = document.createElement('a');
-        link.href = 'https://swlonrsp.github.io/' + item.name;
-        link.textContent = item.name;
-        link.target = '_blank';
-        li.appendChild(link);
-        list.appendChild(li);
-      }
+
+    htmlFiles.forEach(item => {
+      const fileURL = baseURL + item.name;
+
+      fetch(fileURL)
+        .then(response => response.text())
+        .then(text => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(text, 'text/html');
+          const title = doc.querySelector('title') ? doc.querySelector('title').innerText : item.name;
+
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = fileURL;
+          link.textContent = title;
+          link.target = '_blank';
+          li.appendChild(link);
+          list.appendChild(li);
+        })
+        .catch(err => console.error('Error fetching', item.name, err));
     });
   })
   .catch(error => {
