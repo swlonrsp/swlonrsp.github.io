@@ -4,12 +4,30 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  background-color: #f0f4f8;
+  background-color: #0e74eb;
   color: #333;
   padding: 20px;
+  margin: 0;
+}
+.banner {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  border-radius: 8px;
+}
+.logo {
+  margin-right: 20px;
+}
+.logo img {
+  height: 60px;
+  width: auto;
 }
 h1 {
   color: #2a6f97;
+  margin: 0;
+  flex: 1;
 }
 ul {
   list-style-type: none;
@@ -32,7 +50,12 @@ a:hover {
 </style>
 </head>
 <body>
-<h1>Love Clean Air - air quality maps for London boroughs of Merton, Richmond and Wandworth</h1>
+<div class="banner">
+  <div class="logo">
+    <img src="LCA_logo.png" alt="LCA Logo">
+  </div>
+  <h1>SW London Regulatory Service Partnership - Air Pollution Team</h1>
+</div>
 <ul id="file-list">Loading files...</ul>
 
 <script>
@@ -41,7 +64,7 @@ const baseURL = 'https://swlonrsp.github.io/';
 fetch('https://api.github.com/repos/swlonrsp/swlonrsp.github.io/contents/')
   .then(response => response.json())
   .then(data => {
-    const htmlFiles = data.filter(item => item.name.endsWith('.html'));
+    const htmlFiles = data.filter(item => item.name.endsWith('.html') && item.name !== 'index.html');
     const list = document.getElementById('file-list');
     list.innerHTML = '';
 
