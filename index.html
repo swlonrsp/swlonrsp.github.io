@@ -68,25 +68,34 @@ fetch('https://api.github.com/repos/swlonrsp/swlonrsp.github.io/contents/')
     const list = document.getElementById('file-list');
     list.innerHTML = '';
 
-    htmlFiles.forEach(item => {
+    const filePromises = htmlFiles.map(item => {
       const fileURL = baseURL + item.name;
-
-      fetch(fileURL)
+      return fetch(fileURL)
         .then(response => response.text())
         .then(text => {
           const parser = new DOMParser();
           const doc = parser.parseFromString(text, 'text/html');
           const title = doc.querySelector('title') ? doc.querySelector('title').innerText : item.name;
-
-          const li = document.createElement('li');
-          const link = document.createElement('a');
-          link.href = fileURL;
-          link.textContent = title;
-          link.target = '_blank';
-          li.appendChild(link);
-          list.appendChild(li);
+          return { title, fileURL };
         })
-        .catch(err => console.error('Error fetching', item.name, err));
+        .catch(err => {
+          console.error('Error fetching', item.name, err);
+          return { title: item.name, fileURL };
+        });
+    });
+
+    Promise.all(filePromises).then(files => {
+      files.sort((a, b) => a.title.localeCompare(b.title));
+
+      files.forEach(file => {
+        const li = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = file.fileURL;
+        link.textContent = file.title;
+        link.target = '_blank';
+        li.appendChild(link);
+        list.appendChild(li);
+      });
     });
   })
   .catch(error => {
