@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>QuickMap Mobile Year Controls - Interactive Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      overflow-x: hidden;
+    }
+
+    .demo-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .demo-header h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .demo-header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .demo-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 768px) {
+      .demo-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .control-demo {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .demo-title {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .demo-title h2 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .demo-title .specs {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .demo-viewport {
+      position: relative;
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      aspect-ratio: 9 / 16;
+      max-height: 600px;
+      margin: 20px auto;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .demo-viewport {
+        aspect-ratio: 3 / 4;
+        max-height: 500px;
+      }
+    }
+
+    .simulated-map {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      padding: 40px 20px;
+      position: relative;
+    }
+
+    .map-background-text {
+      font-size: 14px;
+      color: rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .selected-year-display {
+      font-size: 72px;
+      font-weight: 900;
+      color: rgba(0,0,0,0.1);
+      line-height: 1;
+    }
+
+    .layer-info {
+      background: rgba(255,255,255,0.9);
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-size: 14px;
+      color: #333;
+    }
+
+    /* Hidden radio buttons */
+    input[type="radio"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* ========================================
+       OPTION 5: QUARTER-CIRCLE CONTROL
+       ======================================== */
+
+    .year-quarter-control {
+      --radius: 90px;
+      --label-size: 32px;
+      --dot-size: 10px;
+      --duration: 300ms;
+      --years: 8;
+
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: calc(var(--radius) + 20px);
+      height: calc(var(--radius) + 20px);
+      /* background moved to ::before pseudo-element */
+      z-index: 1000;
+    }
+
+    .year-quarter-arc {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Background layer clipped to quarter circle */
+    .year-quarter-control::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 100% 0 0 0;
+      box-shadow: -3px -3px 12px rgba(0, 0, 0, 0.15);
+      z-index: -1;
+    }
+
+    .year-quarter-arc li {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: bottom right;
+    }
+
+    .year-quarter-arc li:nth-child(1) { transform: rotate(0deg); }
+    .year-quarter-arc li:nth-child(2) { transform: rotate(12.86deg); }
+    .year-quarter-arc li:nth-child(3) { transform: rotate(25.71deg); }
+    .year-quarter-arc li:nth-child(4) { transform: rotate(38.57deg); }
+    .year-quarter-arc li:nth-child(5) { transform: rotate(51.43deg); }
+    .year-quarter-arc li:nth-child(6) { transform: rotate(64.29deg); }
+    .year-quarter-arc li:nth-child(7) { transform: rotate(77.14deg); }
+    .year-quarter-arc li:nth-child(8) { transform: rotate(90deg); }
+
+    .year-quarter-arc label {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px;
+      transition: all var(--duration);
+    }
+
+    .year-quarter-arc li:nth-child(1) label { transform: translateX(-85px) translateY(0) rotate(0deg); }
+    .year-quarter-arc li:nth-child(2) label { transform: translateX(-80px) translateY(-20px) rotate(-12.86deg); }
+    .year-quarter-arc li:nth-child(3) label { transform: translateX(-72px) translateY(-38px) rotate(-25.71deg); }
+    .year-quarter-arc li:nth-child(4) label { transform: translateX(-60px) translateY(-55px) rotate(-38.57deg); }
+    .year-quarter-arc li:nth-child(5) label { transform: translateX(-45px) translateY(-68px) rotate(-51.43deg); }
+    .year-quarter-arc li:nth-child(6) label { transform: translateX(-28px) translateY(-78px) rotate(-64.29deg); }
+    .year-quarter-arc li:nth-child(7) label { transform: translateX(-10px) translateY(-85px) rotate(-77.14deg); }
+    .year-quarter-arc li:nth-child(8) label { transform: translateX(0) translateY(-90px) rotate(-90deg); }
+
+    .year-dot {
+      width: var(--dot-size);
+      height: var(--dot-size);
+      border-radius: 50%;
+      background: #999;
+      border: 2px solid white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: all var(--duration);
+    }
+
+    .year-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      margin-top: 4px;
+      transition: all var(--duration);
+    }
+
+    .year-quarter-arc li:has(input:checked) .year-dot {
+      width: 14px;
+      height: 14px;
+      background: steelblue;
+      border-color: steelblue;
+      box-shadow: 0 0 0 3px rgba(70, 130, 180, 0.2);
+    }
+
+    .year-quarter-arc li:has(input:checked) .year-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: steelblue;
+    }
+
+    .year-quarter-arc label:hover .year-dot {
+      background: steelblue;
+      transform: scale(1.2);
+    }
+
+    .quarter-year-display {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid steelblue;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .quarter-year-full {
+      font-size: 14px;
+      font-weight: bold;
+      color: steelblue;
+    }
+
+    /* ========================================
+       OPTION 6: ROLLER CONTROL
+       ======================================== */
+
+    .year-roller-control {
+      --width-compact: 65px;
+      --width-expanded: 110px;
+      --height-compact: 95px;
+      --height-expanded: 300px;
+      --duration: 300ms;
+      --item-height: 42px;
+
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: var(--width-compact);
+      height: var(--height-compact);
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      transition: all var(--duration) cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    .year-roller-control[data-expanded="true"] {
+      width: var(--width-expanded);
+      height: var(--height-expanded);
+    }
+
+    .roller-compact {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 10px;
+      opacity: 1;
+      transition: opacity var(--duration);
+    }
+
+    .year-roller-control[data-expanded="true"] .roller-compact {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .roller-prev,
+    .roller-next {
+      font-size: 15px;
+      color: #999;
+      font-weight: 600;
+      line-height: 26px;
+    }
+
+    .roller-current {
+      font-size: 26px;
+      font-weight: bold;
+      color: steelblue;
+      line-height: 36px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(70, 130, 180, 0.1);
+    }
+
+    .roller-expanded {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration);
+      padding: 10px 0;
+    }
+
+    .year-roller-control[data-expanded="true"] .roller-expanded {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .roller-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .roller-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .roller-list::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.2);
+      border-radius: 2px;
+    }
+
+    .roller-list li {
+      scroll-snap-align: center;
+      height: var(--item-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .roller-list label {
+      display: block;
+      width: 90%;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+      color: #666;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 200ms;
+      border-radius: 8px;
+    }
+
+    .roller-list label:active,
+    .roller-list label:hover {
+      background: rgba(70, 130, 180, 0.1);
+      color: steelblue;
+    }
+
+    .roller-list li:has(input:checked) label {
+      background: steelblue;
+      color: white;
+      font-weight: 700;
+      font-size: 19px;
+      transform: scale(1.05);
+    }
+
+    .roller-toggle {
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(70, 130, 180, 0.15);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--duration);
+      z-index: 10;
+    }
+
+    .year-roller-control[data-expanded="true"] .roller-toggle {
+      bottom: 10px;
+      background: rgba(70, 130, 180, 0.25);
+    }
+
+    .roller-toggle:hover {
+      background: rgba(70, 130, 180, 0.3);
+    }
+
+    .toggle-icon {
+      font-size: 14px;
+      color: steelblue;
+      transition: transform var(--duration);
+      font-weight: bold;
+    }
+
+    .year-roller-control[data-expanded="true"] .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    /* ========================================
+       DEMO INFO PANEL
+       ======================================== */
+
+    .info-panel {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px;
+      grid-column: 1 / -1;
+    }
+
+    .info-panel h3 {
+      color: #856404;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .info-panel ul {
+      color: #856404;
+      font-size: 13px;
+      line-height: 1.8;
+      padding-left: 20px;
+    }
+
+    .info-panel strong {
+      color: #664d03;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 767px) {
+      .demo-header h1 {
+        font-size: 20px;
+      }
+
+      .demo-title h2 {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>🎨 QuickMap Mobile Year Controls - Interactive Demo</h1>
+    <p>Test both controls on your device • Tap years to switch • Compare usability</p>
+  </div>
+
+  <div class="demo-container">
+    <!-- Quarter-Circle Control Demo -->
+    <div class="control-demo">
+      <div class="demo-title">
+        <h2>⌟ Option 5: Quarter-Circle</h2>
+        <div class="specs">
+          <strong>Space:</strong> 110×110px (4.0% mobile screen) •
+          <strong>Taps:</strong> 1 •
+          <strong>Best for:</strong> 3-8 years
+        </div>
+      </div>
+
+      <div class="demo-viewport">
+        <div class="simulated-map">
+          <div class="map-background-text">Simulated Map Area<br>(air quality visualization)</div>
+          <div class="selected-year-display" id="quarter-year-big">2024</div>
+          <div class="layer-info">
+            Selected Year: <strong id="quarter-layer-info">2024</strong><br>
+            <span style="font-size: 12px; color: #666;">Markers would switch here</span>
+          </div>
+        </div>
+
+        <!-- Quarter-Circle Control -->
+        <div class="year-quarter-control">
+          <ul class="year-quarter-arc">
+            <li>
+              <input type="radio" id="quarter-2017" name="quarter-year" value="2017">
+              <label for="quarter-2017">
+                <span class="year-dot"></span>
+                <span class="year-label">17</span>
+              </label>
+            </li>
+            <li>
+              <input type="radio" id="quarter-2018" name="quarter-year" value="2018">
+              <label for="quarter-2018">
+                <span class="year-dot"></span>
+                <span class="year-label">18</span>
+              </label>
+            </li>
+            <li>
+              <input type="radio" id="quarter-2019" name="quarter-year" value="2019">
+              <label for="quarter-2019">
+                <span class="year-dot"></span>
+                <span class="year-label">19</span>
+              </label>
+            </li>
+            <li>
+              <input type="radio" id="quarter-2020" name="quarter-year" value="2020">
+              <label for="quarter-2020">
+                <span class="year-dot"></span>
+                <span class="year-label">20</span>
+              </label>
+            </li>
+            <li>
+              <input type="radio" id="quarter-2021" name="quarter-year" value="2021">
+              <label for="quarter-2021">
+                <span class="year-dot"></span>
+                <span class="year-label">21</span>
+              </label>
+            </li>
+            <li>
+              <input type="radio" id="quarter-2022" name="quarter-year" value="2022">
+              <label for="quarter-2022">
+                <span class="year-dot"></span>
+                <span class="year-label">22</span>
+              </label>
+            </li>
+            <li>
+              <input type="radio" id="quarter-2023" name="quarter-year" value="2023">
+              <label for="quarter-2023">
+                <span class="year-dot"></span>
+                <span class="year-label">23</span>
+              </label>
+            </li>
+            <li>
+              <input type="radio" id="quarter-2024" name="quarter-year" value="2024" checked>
+              <label for="quarter-2024">
+                <span class="year-dot"></span>
+                <span class="year-label">24</span>
+              </label>
+            </li>
+          </ul>
+          <div class="quarter-year-display">
+            <span class="quarter-year-full" id="quarter-year-center">24</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Roller Control Demo -->
+    <div class="control-demo">
+      <div class="demo-title">
+        <h2>📜 Option 6: Roller (iOS-Style)</h2>
+        <div class="specs">
+          <strong>Space:</strong> 65×95px collapsed (2.2% screen) •
+          <strong>Taps:</strong> 2 •
+          <strong>Best for:</strong> 8+ years
+        </div>
+      </div>
+
+      <div class="demo-viewport">
+        <div class="simulated-map">
+          <div class="map-background-text">Simulated Map Area<br>(air quality visualization)</div>
+          <div class="selected-year-display" id="roller-year-big">2024</div>
+          <div class="layer-info">
+            Selected Year: <strong id="roller-layer-info">2024</strong><br>
+            <span style="font-size: 12px; color: #666;">Markers would switch here</span>
+          </div>
+        </div>
+
+        <!-- Roller Control -->
+        <div class="year-roller-control" data-expanded="false">
+          <div class="roller-compact">
+            <div class="roller-prev">23</div>
+            <div class="roller-current">24</div>
+            <div class="roller-next">—</div>
+          </div>
+
+          <div class="roller-expanded">
+            <ul class="roller-list">
+              <li>
+                <input type="radio" id="roller-2017" name="roller-year" value="2017">
+                <label for="roller-2017">2017</label>
+              </li>
+              <li>
+                <input type="radio" id="roller-2018" name="roller-year" value="2018">
+                <label for="roller-2018">2018</label>
+              </li>
+              <li>
+                <input type="radio" id="roller-2019" name="roller-year" value="2019">
+                <label for="roller-2019">2019</label>
+              </li>
+              <li>
+                <input type="radio" id="roller-2020" name="roller-year" value="2020">
+                <label for="roller-2020">2020</label>
+              </li>
+              <li>
+                <input type="radio" id="roller-2021" name="roller-year" value="2021">
+                <label for="roller-2021">2021</label>
+              </li>
+              <li>
+                <input type="radio" id="roller-2022" name="roller-year" value="2022">
+                <label for="roller-2022">2022</label>
+              </li>
+              <li>
+                <input type="radio" id="roller-2023" name="roller-year" value="2023">
+                <label for="roller-2023">2023</label>
+              </li>
+              <li>
+                <input type="radio" id="roller-2024" name="roller-year" value="2024" checked>
+                <label for="roller-2024">2024</label>
+              </li>
+            </ul>
+          </div>
+
+          <button class="roller-toggle" aria-label="Expand year selector">
+            <span class="toggle-icon">▼</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="info-panel">
+      <h3>📱 Testing Instructions</h3>
+      <ul>
+        <li><strong>Quarter-Circle (left):</strong> Tap any year dot on the arc. Selected year appears in center circle. One-tap operation.</li>
+        <li><strong>Roller (right):</strong> Tap the down arrow (▼) to expand, select year from list, auto-collapses. Shows prev/current/next when collapsed.</li>
+        <li><strong>Mobile Test:</strong> View on phone (portrait/landscape). Check thumb reach, tap accuracy, visual clarity.</li>
+        <li><strong>Desktop Test:</strong> Both scale up for larger screens. Quarter-circle becomes more spacious.</li>
+        <li><strong>Compare:</strong> Which feels more natural? Which is faster? Which uses screen space better?</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // ===================================
+    // QUARTER-CIRCLE CONTROL HANDLER
+    // ===================================
+    const quarterRadios = document.querySelectorAll('input[name="quarter-year"]');
+    quarterRadios.forEach(radio => {
+      radio.addEventListener('change', function() {
+        if (this.checked) {
+          const year = this.value;
+
+          // Update displays
+          document.getElementById('quarter-year-big').textContent = year;
+          document.getElementById('quarter-layer-info').textContent = year;
+          document.getElementById('quarter-year-center').textContent = year.slice(-2);
+
+          console.log('[Quarter-Circle] Year changed to:', year);
+        }
+      });
+    });
+
+    // ===================================
+    // ROLLER CONTROL HANDLER
+    // ===================================
+    class YearRollerControl {
+      constructor(selector) {
+        this.control = document.querySelector(selector);
+        this.toggle = this.control.querySelector('.roller-toggle');
+        this.radios = this.control.querySelectorAll('input[name="roller-year"]');
+        this.years = Array.from(this.radios).map(r => r.value).sort();
+
+        this.init();
+      }
+
+      init() {
+        // Toggle expand/collapse
+        this.toggle.addEventListener('click', () => {
+          const isExpanded = this.control.dataset.expanded === 'true';
+          this.control.dataset.expanded = !isExpanded;
+          console.log('[Roller] Expanded:', !isExpanded);
+        });
+
+        // Radio button changes
+        this.radios.forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+              const year = e.target.value;
+              this.updateCompactView(year);
+              this.updateMapDisplay(year);
+
+              console.log('[Roller] Year changed to:', year);
+
+              // Auto-collapse after 300ms
+              setTimeout(() => {
+                this.control.dataset.expanded = 'false';
+              }, 300);
+            }
+          });
+        });
+
+        // Initialize with checked radio
+        const selected = this.control.querySelector('input:checked');
+        if (selected) {
+          this.updateCompactView(selected.value);
+        }
+      }
+
+      updateCompactView(year) {
+        const currentIndex = this.years.indexOf(year);
+
+        const prevYear = currentIndex > 0
+          ? this.years[currentIndex - 1].slice(-2)
+          : '—';
+        const currYear = year.slice(-2);
+        const nextYear = currentIndex < this.years.length - 1
+          ? this.years[currentIndex + 1].slice(-2)
+          : '—';
+
+        this.control.querySelector('.roller-prev').textContent = prevYear;
+        this.control.querySelector('.roller-current').textContent = currYear;
+        this.control.querySelector('.roller-next').textContent = nextYear;
+      }
+
+      updateMapDisplay(year) {
+        document.getElementById('roller-year-big').textContent = year;
+        document.getElementById('roller-layer-info').textContent = year;
+      }
+    }
+
+    // Initialize roller control
+    document.addEventListener('DOMContentLoaded', () => {
+      new YearRollerControl('.year-roller-control');
+      console.log('✅ Demo initialized successfully');
+    });
+
+    // Log screen size for testing
+    window.addEventListener('resize', () => {
+      console.log('Screen size:', window.innerWidth, 'x', window.innerHeight);
+    });
+
+    console.log('📱 Initial screen size:', window.innerWidth, 'x', window.innerHeight);
+  </script>
+</body>
+</html>
