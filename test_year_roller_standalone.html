@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Year Roller Control - Standalone Test</title>
+  <style>
+    /* Page styling */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .demo-container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #333;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .config-info {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .config-info strong {
+      color: steelblue;
+    }
+
+    .instructions {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .instructions h3 {
+      margin-top: 0;
+      color: #856404;
+      font-size: 16px;
+    }
+
+    .instructions ul {
+      margin: 10px 0 0 0;
+      padding-left: 20px;
+    }
+
+    .instructions li {
+      margin-bottom: 5px;
+      color: #856404;
+    }
+
+    .event-log {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .event-log h3 {
+      margin-top: 0;
+      font-size: 14px;
+      color: #495057;
+    }
+
+    .event-log-entry {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      padding: 4px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .event-log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .event-log-entry .timestamp {
+      color: #6c757d;
+      margin-right: 8px;
+    }
+
+    .event-log-entry .event-type {
+      color: steelblue;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .demo-map-placeholder {
+      background: #e9ecef;
+      height: 300px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6c757d;
+      font-size: 18px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .demo-map-placeholder::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px),
+        linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    .current-year-display {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      font-size: 16px;
+      font-weight: 600;
+      color: steelblue;
+      z-index: 10;
+    }
+
+    @media (max-width: 768px) {
+      .demo-container {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+
+  <!-- Year Roller Control CSS -->
+  <style>
+    /* ========================================
+       YEAR ROLLER CONTROL - CUSTOM CONFIG
+       A2 + B1 + C1 + D1 + E1 + F1 + G2 + H1
+       ======================================== */
+
+    /* ---------------------------
+       Main Container
+       --------------------------- */
+    .year-roller-control {
+      /* Size variables (F1: Compact, adjusted for 4-digit) */
+      --width-compact: 75px;
+      --width-expanded: 110px;
+      --height-compact: 90px;
+      --height-expanded: 280px;
+      --item-height: 40px;
+      --duration: 300ms;
+      --easing: cubic-bezier(0.4, 0, 0.2, 1);
+
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: var(--width-compact);
+      height: var(--height-compact);
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all var(--duration) var(--easing);
+      z-index: 1000;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* Expanded state */
+    .year-roller-control[data-expanded="true"] {
+      width: var(--width-expanded);
+      height: var(--height-expanded);
+    }
+
+    /* ---------------------------
+       Collapsed View (B1 + G2)
+       --------------------------- */
+    .roller-compact {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 8px;
+      opacity: 1;
+      transition: opacity var(--duration) var(--easing);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: rgba(70, 130, 180, 0.2);
+      position: relative;
+    }
+
+    /* Hide when expanded */
+    .year-roller-control[data-expanded="true"] .roller-compact {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Touch feedback */
+    .roller-compact:active {
+      background: rgba(70, 130, 180, 0.05);
+    }
+
+    /* B1: Previous year (faded) */
+    .roller-prev {
+      font-size: 14px;
+      color: #999;
+      font-weight: 400;
+      line-height: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* B1: Current year (bold, highlighted) */
+    .roller-current {
+      font-size: 24px;
+      font-weight: 700;
+      color: steelblue;
+      background: rgba(70, 130, 180, 0.1);
+      padding: 4px 12px;
+      border-radius: 6px;
+      line-height: 28px;
+      margin: 2px 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* B1: Next year (faded, lighter) */
+    .roller-next {
+      font-size: 14px;
+      color: #ccc;
+      font-weight: 400;
+      line-height: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* A2: Ellipsis affordance indicator */
+    .roller-ellipsis {
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: #999;
+      letter-spacing: 2px;
+      line-height: 1;
+      transition: color 200ms;
+    }
+
+    .roller-compact:hover .roller-ellipsis {
+      color: steelblue;
+    }
+
+    /* ---------------------------
+       Expanded List View (C1)
+       --------------------------- */
+    .roller-expanded {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration) var(--easing);
+      padding: 8px 0;
+    }
+
+    /* Show when expanded */
+    .year-roller-control[data-expanded="true"] .roller-expanded {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* C1: Scrollable list with snap */
+    .roller-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(70, 130, 180, 0.3) transparent;
+    }
+
+    /* Webkit scrollbar styling */
+    .roller-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .roller-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .roller-list::-webkit-scrollbar-thumb {
+      background: rgba(70, 130, 180, 0.3);
+      border-radius: 2px;
+    }
+
+    .roller-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(70, 130, 180, 0.5);
+    }
+
+    /* List items with snap alignment */
+    .roller-list li {
+      scroll-snap-align: center;
+      height: var(--item-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Hide radio buttons (using labels only) */
+    .roller-radio {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* G2: Year labels (always 4-digit) */
+    .roller-list label {
+      display: block;
+      width: 90%;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+      color: #666;
+      padding: 10px 8px;
+      cursor: pointer;
+      transition: all 200ms ease;
+      border-radius: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Hover/touch state */
+    .roller-list label:active,
+    .roller-list label:hover {
+      background: rgba(70, 130, 180, 0.1);
+      color: steelblue;
+    }
+
+    /* Selected item (checked radio) */
+    .roller-list li:has(input:checked) label {
+      background: steelblue;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .roller-list li:has(input:checked) {
+      scroll-margin: 120px; /* Keep selected item centered */
+    }
+
+    /* ---------------------------
+       Responsive Adjustments
+       --------------------------- */
+
+    /* Landscape mobile: smaller */
+    @media (max-width: 767px) and (orientation: landscape) {
+      .year-roller-control {
+        --width-compact: 65px;
+        --height-compact: 75px;
+        --height-expanded: 200px;
+        --item-height: 32px;
+        bottom: 10px;
+        right: 10px;
+      }
+
+      .roller-current {
+        font-size: 20px;
+        padding: 3px 10px;
+      }
+
+      .roller-prev,
+      .roller-next {
+        font-size: 12px;
+      }
+    }
+
+    /* Tablet: slightly larger touch targets */
+    @media (min-width: 768px) {
+      .year-roller-control {
+        --width-expanded: 130px;
+        --item-height: 44px;
+      }
+
+      .roller-list label {
+        font-size: 18px;
+      }
+
+      .roller-list li:has(input:checked) label {
+        font-size: 20px;
+      }
+    }
+
+    /* Desktop: optional larger size */
+    @media (min-width: 1024px) {
+      .year-roller-control {
+        --width-compact: 85px;
+        --height-compact: 100px;
+      }
+
+      .roller-current {
+        font-size: 26px;
+      }
+    }
+
+    /* ---------------------------
+       H1: Accessibility - Screen Reader Only
+       --------------------------- */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* Focus visible (keyboard navigation) */
+    .roller-compact:focus-visible {
+      outline: 3px solid steelblue;
+      outline-offset: 2px;
+    }
+
+    .roller-list label:focus-visible {
+      outline: 2px solid steelblue;
+      outline-offset: -2px;
+    }
+
+    /* Reduce motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      .year-roller-control,
+      .roller-compact,
+      .roller-expanded,
+      .roller-list label {
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="demo-container">
+    <h1>Year Roller Control</h1>
+    <p class="subtitle">Custom Configuration: A2 + B1 + C1 + D1 + E1 + F1 + G2 + H1</p>
+
+    <div class="config-info">
+      <strong>Configuration:</strong><br>
+      • <strong>A2</strong>: Ellipsis affordance (◦◦◦)<br>
+      • <strong>B1</strong>: Bold center, faded neighbors<br>
+      • <strong>C1</strong>: Scroll snap list<br>
+      • <strong>D1</strong>: Immediate expansion<br>
+      • <strong>E1</strong>: Auto-collapse after selection<br>
+      • <strong>F1</strong>: Compact size (75×90px)<br>
+      • <strong>G2</strong>: Always 4-digit years<br>
+      • <strong>H1</strong>: Full ARIA + keyboard support
+    </div>
+
+    <div class="instructions">
+      <h3>How to Test</h3>
+      <ul>
+        <li><strong>Mouse/Touch:</strong> Click the roller in bottom-right to expand, click year to select</li>
+        <li><strong>Keyboard:</strong> Tab to control, Enter/Space to expand, Arrow keys to navigate, Enter to select</li>
+        <li><strong>Screen Reader:</strong> Test with NVDA/JAWS/VoiceOver for ARIA announcements</li>
+        <li><strong>Mobile:</strong> Open on phone/tablet to test touch and responsive sizing</li>
+      </ul>
+    </div>
+
+    <div class="demo-map-placeholder">
+      <div class="current-year-display">Selected Year: <span id="display-year">2024</span></div>
+      <div>Simulated Map Area</div>
+    </div>
+
+    <div class="event-log">
+      <h3>Event Log</h3>
+      <div id="event-log-container"></div>
+    </div>
+  </div>
+
+  <!-- Year Roller Control HTML -->
+  <div class="year-roller-control"
+       role="listbox"
+       aria-label="Select year for map data"
+       data-expanded="false">
+
+    <div class="roller-compact"
+         role="button"
+         tabindex="0"
+         aria-expanded="false"
+         aria-haspopup="listbox"
+         aria-label="Year selector. Current year 2024. Press Enter to expand.">
+
+      <div class="roller-prev" aria-hidden="true">2023</div>
+      <div class="roller-current" aria-hidden="true">2024</div>
+      <div class="roller-next" aria-hidden="true">—</div>
+
+      <div class="roller-ellipsis" aria-hidden="true">◦◦◦</div>
+    </div>
+
+    <div class="roller-expanded" aria-hidden="true">
+      <ul class="roller-list" role="listbox">
+
+        <li role="option" aria-selected="false">
+          <input type="radio" id="roller-2017" name="year" value="2017" class="roller-radio">
+          <label for="roller-2017">2017</label>
+        </li>
+
+        <li role="option" aria-selected="false">
+          <input type="radio" id="roller-2018" name="year" value="2018" class="roller-radio">
+          <label for="roller-2018">2018</label>
+        </li>
+
+        <li role="option" aria-selected="false">
+          <input type="radio" id="roller-2019" name="year" value="2019" class="roller-radio">
+          <label for="roller-2019">2019</label>
+        </li>
+
+        <li role="option" aria-selected="false">
+          <input type="radio" id="roller-2020" name="year" value="2020" class="roller-radio">
+          <label for="roller-2020">2020</label>
+        </li>
+
+        <li role="option" aria-selected="false">
+          <input type="radio" id="roller-2021" name="year" value="2021" class="roller-radio">
+          <label for="roller-2021">2021</label>
+        </li>
+
+        <li role="option" aria-selected="false">
+          <input type="radio" id="roller-2022" name="year" value="2022" class="roller-radio">
+          <label for="roller-2022">2022</label>
+        </li>
+
+        <li role="option" aria-selected="false">
+          <input type="radio" id="roller-2023" name="year" value="2023" class="roller-radio">
+          <label for="roller-2023">2023</label>
+        </li>
+
+        <li role="option" aria-selected="true">
+          <input type="radio" id="roller-2024" name="year" value="2024" class="roller-radio" checked>
+          <label for="roller-2024">2024</label>
+        </li>
+
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Screen reader live region -->
+  <div id="year-announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Year Roller Control JavaScript -->
+  <script>
+    /**
+     * Year Roller Control - Custom Configuration
+     * A2 + B1 + C1 + D1 + E1 + F1 + G2 + H1
+     */
+
+    class YearRollerControl {
+      constructor(selector, options = {}) {
+        this.control = document.querySelector(selector);
+        if (!this.control) {
+          console.error(`YearRollerControl: Element "${selector}" not found`);
+          return;
+        }
+
+        this.compact = this.control.querySelector('.roller-compact');
+        this.expanded = this.control.querySelector('.roller-expanded');
+        this.radios = this.control.querySelectorAll('input[type="radio"]');
+        this.list = this.control.querySelector('.roller-list');
+        this.announcements = document.getElementById('year-announcements');
+
+        // Options
+        this.onYearChange = options.onYearChange || null;
+        this.collapseDelay = options.collapseDelay || 300;
+
+        // State
+        this.isExpanded = false;
+
+        this.init();
+      }
+
+      init() {
+        // D1: Immediate expansion on click/tap
+        this.compact.addEventListener('click', () => this.expand());
+
+        // H1: Keyboard support for compact view
+        this.compact.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.expand();
+          }
+        });
+
+        // Radio button change handlers
+        this.radios.forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            if (e.target.checked) {
+              this.handleYearSelection(e.target.value);
+            }
+          });
+
+          // H1: Keyboard navigation in list
+          radio.addEventListener('keydown', (e) => {
+            if (this.isExpanded) {
+              this.handleListKeyboard(e);
+            }
+          });
+        });
+
+        // Initialize compact view with current selection
+        const selectedRadio = this.control.querySelector('input:checked');
+        if (selectedRadio) {
+          this.updateCompactView(selectedRadio.value);
+        }
+
+        // H1: Escape key to collapse
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && this.isExpanded) {
+            this.collapse();
+          }
+        });
+      }
+
+      expand() {
+        this.isExpanded = true;
+        this.control.dataset.expanded = 'true';
+        this.compact.setAttribute('aria-expanded', 'true');
+        this.expanded.setAttribute('aria-hidden', 'false');
+
+        logEvent('expand', 'Control expanded');
+
+        const checkedRadio = this.control.querySelector('input:checked');
+        const radioToFocus = checkedRadio || this.radios[0];
+
+        setTimeout(() => {
+          radioToFocus.focus();
+
+          if (checkedRadio) {
+            const listItem = checkedRadio.closest('li');
+            listItem?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 50);
+      }
+
+      collapse() {
+        this.isExpanded = false;
+        this.control.dataset.expanded = 'false';
+        this.compact.setAttribute('aria-expanded', 'false');
+        this.expanded.setAttribute('aria-hidden', 'true');
+        this.compact.focus();
+
+        logEvent('collapse', 'Control collapsed');
+      }
+
+      handleYearSelection(year) {
+        this.updateCompactView(year);
+        this.updateAriaSelected(year);
+        this.announce(`Year ${year} selected`);
+
+        logEvent('select', `Year ${year} selected`);
+
+        if (this.onYearChange) {
+          this.onYearChange(year);
+        }
+
+        setTimeout(() => {
+          this.collapse();
+        }, this.collapseDelay);
+      }
+
+      updateCompactView(currentYear) {
+        const yearNum = parseInt(currentYear);
+        const allYears = Array.from(this.radios)
+          .map(r => parseInt(r.value))
+          .sort((a, b) => a - b);
+
+        const currentIndex = allYears.indexOf(yearNum);
+
+        const prevYear = currentIndex > 0 ? allYears[currentIndex - 1].toString() : '—';
+        const currYear = currentYear;
+        const nextYear = currentIndex < allYears.length - 1
+          ? allYears[currentIndex + 1].toString()
+          : '—';
+
+        this.control.querySelector('.roller-prev').textContent = prevYear;
+        this.control.querySelector('.roller-current').textContent = currYear;
+        this.control.querySelector('.roller-next').textContent = nextYear;
+
+        this.compact.setAttribute('aria-label',
+          `Year selector. Current year ${currYear}. Press Enter to expand.`);
+      }
+
+      updateAriaSelected(selectedYear) {
+        this.control.querySelectorAll('.roller-list li').forEach(li => {
+          const radio = li.querySelector('input');
+          const isSelected = radio.value === selectedYear;
+          li.setAttribute('aria-selected', isSelected.toString());
+        });
+      }
+
+      handleListKeyboard(event) {
+        const currentRadio = document.activeElement;
+        if (!currentRadio || currentRadio.type !== 'radio') return;
+
+        const allRadios = Array.from(this.radios);
+        const currentIndex = allRadios.indexOf(currentRadio);
+
+        let nextIndex = currentIndex;
+
+        switch(event.key) {
+          case 'ArrowUp':
+          case 'ArrowLeft':
+            event.preventDefault();
+            nextIndex = currentIndex > 0 ? currentIndex - 1 : allRadios.length - 1;
+            break;
+
+          case 'ArrowDown':
+          case 'ArrowRight':
+            event.preventDefault();
+            nextIndex = currentIndex < allRadios.length - 1 ? currentIndex + 1 : 0;
+            break;
+
+          case 'Home':
+            event.preventDefault();
+            nextIndex = 0;
+            break;
+
+          case 'End':
+            event.preventDefault();
+            nextIndex = allRadios.length - 1;
+            break;
+
+          default:
+            return;
+        }
+
+        allRadios[nextIndex].focus();
+        allRadios[nextIndex].checked = true;
+        allRadios[nextIndex].dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      announce(message) {
+        if (this.announcements) {
+          this.announcements.textContent = message;
+
+          setTimeout(() => {
+            this.announcements.textContent = '';
+          }, 1000);
+        }
+      }
+
+      setYear(year) {
+        const radio = this.control.querySelector(`input[value="${year}"]`);
+        if (radio) {
+          radio.checked = true;
+          this.handleYearSelection(year);
+        }
+      }
+
+      getCurrentYear() {
+        const checked = this.control.querySelector('input:checked');
+        return checked ? checked.value : null;
+      }
+    }
+
+    // Event logging for demo
+    function logEvent(type, message) {
+      const container = document.getElementById('event-log-container');
+      const entry = document.createElement('div');
+      entry.className = 'event-log-entry';
+
+      const timestamp = new Date().toLocaleTimeString();
+      entry.innerHTML = `<span class="timestamp">${timestamp}</span><span class="event-type">${type}</span>${message}`;
+
+      container.insertBefore(entry, container.firstChild);
+
+      // Keep only last 10 entries
+      while (container.children.length > 10) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      const roller = new YearRollerControl('.year-roller-control', {
+        onYearChange: (year) => {
+          // Update display
+          document.getElementById('display-year').textContent = year;
+          console.log(`Year changed to: ${year}`);
+        },
+        collapseDelay: 300
+      });
+
+      window.yearRollerControl = roller;
+
+      logEvent('init', 'Year Roller Control initialized');
+    });
+  </script>
+
+</body>
+</html>
