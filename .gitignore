@@ -2,3 +2,11 @@
 .Rapp.history
 .RData
 .Rhistory
+
+# Claude Code project working files (not published)
+CLAUDE.md
+CLAUDE.local.md
+STATUS.md
+.claude/
+plans/
+work/

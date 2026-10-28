@@ -1,108 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background-color: #0e74eb;
-  color: #333;
-  padding: 20px;
-  margin: 0;
-}
-.banner {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 15px;
-  border-radius: 8px;
-}
-.logo {
-  margin-right: 20px;
-}
-.logo img {
-  height: 60px;
-  width: auto;
-}
-h1 {
-  color: #2a6f97;
-  margin: 0;
-  flex: 1;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  background-color: #ffffff;
-  margin: 8px 0;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-a {
-  text-decoration: none;
-  color: #1d3557;
-}
-a:hover {
-  text-decoration: underline;
-}
-</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Love Clean Air - Air Quality Maps</title>
+<meta name="description" content="Air pollution maps for Croydon, Merton, Richmond upon Thames and Wandsworth, hosted by the South West London Regulatory Services Partnership.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="site.css">
 </head>
 <body>
-<div class="banner">
-  <div class="logo">
-    <img src="LCA_logo.png" alt="LCA Logo">
+<header class="banner">
+  <div class="wrap">
+    <img src="LCA_logo.png" alt="Love Clean Air">
+    <div>
+      <h1>Air pollution maps</h1>
+      <p>South West London Regulatory Services Partnership<span class="sep" aria-hidden="true"></span>Croydon, Merton, Richmond upon Thames and Wandsworth. Measured nitrogen dioxide (NO₂) and fine particles (PM₂.₅). Each map opens in a new tab.</p>
+    </div>
   </div>
-  <h1>Air pollution maps hosted by the SW London Regulatory Services Partnership</h1>
-</div>
-<ul id="file-list">Loading files...</ul>
-<title>Love Clean Air - Air Quality Maps</title>
+</header>
+
+<main>
+  <div class="wrap">
+    <div id="councils" class="councils"><p class="status">Loading maps…</p></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Hosted by the South West London Regulatory Services Partnership.</span>
+    <a href="archive.html">Archive of earlier map versions</a>
+  </div>
+</footer>
+
+<script src="site.js"></script>
 <script>
-const baseURL = 'https://swlonrsp.github.io/';
+// Keep the period ("2020–2025", "15–20 Jan 2024") on one line.
+function labelParts(label) {
+  const i = label.lastIndexOf(', ');
+  return i < 0 ? [label] : [label.slice(0, i + 1) + ' ', el('span', { class: 'nowrap' }, label.slice(i + 2))];
+}
 
-fetch('https://api.github.com/repos/swlonrsp/swlonrsp.github.io/contents/')
-  .then(response => response.json())
-  .then(data => {
-    const htmlFiles = data.filter(item => item.name.endsWith('.html') && item.name !== 'index.html');
-    const list = document.getElementById('file-list');
-    list.innerHTML = '';
+function card(map, council) {
+  const thumb = map.thumb
+    ? el('div', { class: 'thumb' }, el('img', { src: map.thumb, alt: '', loading: 'lazy', width: '640', height: '360' }))
+    : el('div', { class: 'thumb none' }, 'No preview yet');
+  return el('a', { class: 'card', href: map.file, target: '_blank', rel: 'noopener' },
+    thumb,
+    el('div', { class: 'body' },
+      el('span', { class: 'label' }, ...labelParts(chemText(map.label))),
+      map.detail ? el('span', { class: 'detail' }, map.detail) : null,
+      el('span', { class: 'open' }, 'Open map ↗')));
+}
 
-    const filePromises = htmlFiles.map(item => {
-      const fileURL = baseURL + item.name;
-      return fetch(fileURL)
-        .then(response => response.text())
-        .then(text => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(text, 'text/html');
-          const title = doc.querySelector('title') ? doc.querySelector('title').innerText : item.name;
-          return { title, fileURL };
-        })
-        .catch(err => {
-          console.error('Error fetching', item.name, err);
-          return { title: item.name, fileURL };
-        });
-    });
+loadSite().then(({ manifest, repoFiles }) => {
+  const known = new Map(manifest.maps.map(m => [m.file, m]));
+  // Front page: manifest maps that exist in the repository, plus new *_latest maps not yet in maps.json.
+  const files = repoFiles ? repoFiles.filter(isFrontPage) : [...known.keys()];
+  const maps = files.map(f => known.get(f) || { file: f, council: councilFor(f, manifest.councils), label: labelFromFile(f) });
 
-    Promise.all(filePromises).then(files => {
-      files.sort((a, b) => a.title.localeCompare(b.title));
+  const councils = [...manifest.councils];
+  if (maps.some(m => m.council === 'other')) councils.push({ id: 'other', name: 'Other maps', colour: '#55636f', tint: '#eceff2' });
 
-      files.forEach(file => {
-        const li = document.createElement('li');
-        const link = document.createElement('a');
-        link.href = file.fileURL;
-        link.textContent = file.title;
-        link.target = '_blank';
-        li.appendChild(link);
-        list.appendChild(li);
-      });
-    });
-  })
-  .catch(error => {
-    document.getElementById('file-list').textContent = 'Error loading files.';
-    console.error(error);
-  });
+  const root = document.getElementById('councils');
+  root.replaceChildren();
+  for (const council of councils) {
+    const own = maps.filter(m => m.council === council.id).sort((a, b) => a.label.localeCompare(b.label));
+    if (!own.length) continue;
+    const wide = council.id === 'episodes' || council.id === 'other';
+    root.append(councilSection(council, el('div', { class: 'cards' }, ...own.map(m => card(m, council))), wide ? 'wide' : ''));
+  }
+}).catch(err => {
+  console.error(err);
+  document.getElementById('councils').replaceChildren(el('p', { class: 'status' }, 'The map list could not be loaded. Please refresh the page.'));
+});
 </script>
 </body>
 </html>

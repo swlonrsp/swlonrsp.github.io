@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Map Archive - Love Clean Air</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<header class="banner">
+  <div class="wrap">
+    <a href="./"><img src="LCA_logo.png" alt="Love Clean Air: back to current maps"></a>
+    <div>
+      <h1>Map archive</h1>
+      <p>Earlier and dated versions of the maps. For the current maps, go to the <a href="./">front page</a>.</p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div id="councils" class="councils"><p class="status">Loading archive…</p></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Hosted by the South West London Regulatory Services Partnership.</span>
+    <a href="./">Current maps</a>
+  </div>
+</footer>
+
+<script src="site.js"></script>
+<script>
+loadSite().then(({ manifest, repoFiles }) => {
+  const root = document.getElementById('councils');
+  if (!repoFiles) {
+    root.replaceChildren(el('p', { class: 'status' }, 'The archive list comes from GitHub and is unavailable just now. Please try again later.'));
+    return;
+  }
+  const files = repoFiles.filter(f => !isFrontPage(f));
+  const councils = [...manifest.councils, { id: 'other', name: 'Other maps', colour: '#55636f', tint: '#eceff2' }];
+  root.replaceChildren();
+  for (const council of councils) {
+    const own = files.filter(f => councilFor(f, manifest.councils) === council.id).sort();
+    if (!own.length) continue;
+    const list = el('ul', { class: 'archive-list' }, ...own.map(f =>
+      el('li', {}, el('a', { href: f, target: '_blank', rel: 'noopener' },
+        chemText(labelFromFile(f)), ' ', el('small', {}, f)))));
+    root.append(councilSection(council, list));
+  }
+  if (!root.children.length) root.append(el('p', { class: 'status' }, 'No archived maps.'));
+}).catch(err => {
+  console.error(err);
+  document.getElementById('councils').replaceChildren(el('p', { class: 'status' }, 'The archive could not be loaded. Please refresh the page.'));
+});
+</script>
+</body>
+</html>

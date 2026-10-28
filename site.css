@@ -1,0 +1,136 @@
+/* Layout: LCA-blue banner, then a 2-column grid of council sections (1 column on phones), Episodes full width. */
+:root {
+  --lca-blue: #0e74eb;
+  --lca-green: #3be12c;
+  --page: #f5f7f9;
+  --surface: #ffffff;
+  --ink: #1b2733;
+  --ink-soft: #55636f;
+  --line: #dde3e9;
+  --font-display: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --radius: 10px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.5 var(--font-body);
+}
+a { color: inherit; }
+a:focus-visible { outline: 3px solid var(--lca-blue); outline-offset: 3px; border-radius: 4px; }
+
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Banner */
+.banner { background: var(--lca-blue); color: #fff; }
+.banner .wrap {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding-block: 22px 26px;
+}
+.banner img { height: 76px; width: auto; flex: none; }
+.banner h1 {
+  margin: 0;
+  font: 800 clamp(1.6rem, 3.4vw, 2.4rem)/1.1 var(--font-display);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.banner p { margin: 6px 0 0; max-width: 62ch; opacity: 0.92; }
+.banner .sep { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--lca-green); margin: 0 8px 1px; }
+
+/* Sections */
+main .wrap { padding-block: 32px 8px; }
+.councils {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: 32px 28px;
+}
+.council { min-width: 0; }
+.council.wide { grid-column: 1 / -1; }
+.council-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--c);
+  color: #fff;
+}
+.council-head h2 { margin: 0; font: 700 1.25rem/1.2 var(--font-display); }
+.council-head span { font-size: 0.85rem; opacity: 0.88; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  gap: 16px;
+  padding: 16px;
+  background: var(--t);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.council.wide .cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+
+/* Cards */
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(27, 39, 51, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(27, 39, 51, 0.14); }
+.card .thumb {
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  background: var(--line);
+  border-bottom: 3px solid var(--c);
+}
+.card .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.card .thumb.none { display: grid; place-items: center; color: var(--ink-soft); font-size: 0.85rem; }
+.card .body { padding: 12px 14px 14px; display: grid; gap: 4px; }
+.card .label { font-weight: 700; font-size: 1.02rem; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.card .detail { color: var(--ink-soft); font-size: 0.86rem; }
+.card .open { color: var(--c); font-size: 0.82rem; font-weight: 600; margin-top: 4px; }
+.card:hover .open { text-decoration: underline; }
+
+.status { color: var(--ink-soft); }
+.nowrap { white-space: nowrap; }
+
+/* Footer */
+footer .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-block: 28px 36px;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+footer a { color: var(--lca-blue); font-weight: 600; }
+
+/* Archive list */
+.archive-list { list-style: none; margin: 0; padding: 12px 16px; background: var(--t); border-radius: 0 0 var(--radius) var(--radius); display: grid; gap: 6px; }
+.archive-list a { display: block; padding: 8px 12px; background: var(--surface); border-radius: 6px; text-decoration: none; overflow-wrap: anywhere; }
+.archive-list a:hover { text-decoration: underline; }
+.archive-list small { color: var(--ink-soft); }
+
+@media (max-width: 560px) {
+  .banner .wrap { flex-direction: column; align-items: flex-start; gap: 14px; }
+  .banner img { height: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+  .card:hover { transform: none; }
+}

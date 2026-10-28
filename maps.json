@@ -1,0 +1,106 @@
+{
+  "councils": [
+    {
+      "id": "croydon",
+      "name": "Croydon",
+      "prefix": "LBC",
+      "colour": "#880088",
+      "tint": "#F5EAF5"
+    },
+    {
+      "id": "merton",
+      "name": "Merton",
+      "prefix": "LBM",
+      "colour": "#5F3E94",
+      "tint": "#EEEAF5"
+    },
+    {
+      "id": "richmond",
+      "name": "Richmond upon Thames",
+      "prefix": "LBRUT",
+      "colour": "#005794",
+      "tint": "#EAF1F6"
+    },
+    {
+      "id": "wandsworth",
+      "name": "Wandsworth",
+      "prefix": "LBW",
+      "colour": "#0189CA",
+      "tint": "#E6F6FE"
+    },
+    {
+      "id": "episodes",
+      "name": "Episodes",
+      "prefix": null,
+      "colour": "#3D4A57",
+      "tint": "#ECEFF2",
+      "blurb": "Short pollution events across more than one borough"
+    }
+  ],
+  "maps": [
+    {
+      "file": "LBC_NO2_latest.html",
+      "council": "croydon",
+      "pollutant": "NO2",
+      "label": "NO2 annual mean, 2020–2025",
+      "detail": "Diffusion tubes · Schools",
+      "thumb": "thumbs/LBC_NO2_latest.jpg"
+    },
+    {
+      "file": "LBM_NO2_latest.html",
+      "council": "merton",
+      "pollutant": "NO2",
+      "label": "NO2 annual mean, 2019–2025",
+      "detail": "Diffusion tubes · Breathe London sensors · Schools",
+      "thumb": "thumbs/LBM_NO2_latest.jpg"
+    },
+    {
+      "file": "LBM_PM25_latest.html",
+      "council": "merton",
+      "pollutant": "PM2.5",
+      "label": "PM2.5 annual mean, 2021–2024",
+      "detail": "Breathe London sensors · Schools",
+      "thumb": "thumbs/LBM_PM25_latest.jpg"
+    },
+    {
+      "file": "LBRUT_NO2_latest.html",
+      "council": "richmond",
+      "pollutant": "NO2",
+      "label": "NO2 annual mean, 1993–2024",
+      "detail": "Diffusion tubes · Breathe London sensors",
+      "thumb": "thumbs/LBRUT_NO2_latest.jpg"
+    },
+    {
+      "file": "LBRUT_PM25_latest.html",
+      "council": "richmond",
+      "pollutant": "PM2.5",
+      "label": "PM2.5 annual mean, 2021–2024",
+      "detail": "Breathe London sensors",
+      "thumb": "thumbs/LBRUT_PM25_latest.jpg"
+    },
+    {
+      "file": "LBW_NO2_latest.html",
+      "council": "wandsworth",
+      "pollutant": "NO2",
+      "label": "NO2 annual mean, 2017–2024",
+      "detail": "Diffusion tubes · Breathe London sensors · Schools",
+      "thumb": "thumbs/LBW_NO2_latest.jpg"
+    },
+    {
+      "file": "LBW_PM25_latest.html",
+      "council": "wandsworth",
+      "pollutant": "PM2.5",
+      "label": "PM2.5 annual mean, 2021–2024",
+      "detail": "Breathe London sensors · Schools",
+      "thumb": "thumbs/LBW_PM25_latest.jpg"
+    },
+    {
+      "file": "pm25_episode_240115-20.html",
+      "council": "episodes",
+      "pollutant": "PM2.5",
+      "label": "PM2.5 hourly, 15–20 Jan 2024",
+      "detail": "Wandsworth and Richmond · Breathe London sensors",
+      "thumb": "thumbs/pm25_episode_240115-20.jpg"
+    }
+  ]
+}
